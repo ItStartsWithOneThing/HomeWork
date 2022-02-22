@@ -1,4 +1,5 @@
 ﻿using HomeWork.Models;
+using HomeWorkBL;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -11,30 +12,27 @@ namespace HomeWork.Controllers
     [Route("[controller]")]
     public class LaptopController : ControllerBase
     {
-        private static List<Laptop> _laptops;
+
+        private readonly LaptopService _laptopService;
+        
         private readonly ILogger<LaptopController> _logger;
 
-        static LaptopController()
-        {
-            _laptops = new List<Laptop>();
-
-        }
-
-        public LaptopController(ILogger<LaptopController> logger)
+        
+        public LaptopController(ILogger<LaptopController> logger, LaptopService laptopService)
         {
             _logger = logger;
-
+            _laptopService = laptopService;
         }
 
         #region GetMethods
 
-        [HttpGet("getAll")] // Without Params
+        [HttpGet("getAll")] //Using Routing in HttpGetAttribute, Without Params
         public IActionResult GetAllLaptops()
         {
-            if (_laptops != null)
+            if (_laptopService.GetAllLaptops() != null)
             {
                 _logger.LogInformation("GetAllLaptops: Successfully taken");
-                return Ok(_laptops);
+                return Ok(_laptopService.GetAllLaptops());
             }
 
             _logger.LogInformation("GetAllLaptops: Couldnt find any");
@@ -44,11 +42,11 @@ namespace HomeWork.Controllers
         [HttpGet] // Three Params From Querry
         public IActionResult GetByMultiple([FromQuery] int ram, [FromQuery] int ssd, [FromQuery] string model)
         {
-            var dbLaptop = _laptops.FirstOrDefault(x => x.Ram == ram && x.Ssd == ssd && x.Model == model);
+            var dbLaptop = _laptopService.GetLaptopByMultiple(ram, ssd, model);
 
             if (dbLaptop != null)
             {
-                _logger.LogInformation($"GetByMultiple: Laptop finded by id - {dbLaptop.Id}");
+                _logger.LogInformation($"GetByMultiple: Laptop finded with id - {dbLaptop.Id}");
                 return Ok(dbLaptop);
             }
 
@@ -59,7 +57,7 @@ namespace HomeWork.Controllers
         [HttpGet("{id}")] // One Parameter
         public IActionResult GetById(Guid id)
         {
-            var dbLaptop = _laptops.FirstOrDefault(x => x.Id == id);
+            var dbLaptop = _laptopService.GetLaptopById(id);
 
             if (dbLaptop != null)
             {
@@ -80,7 +78,7 @@ namespace HomeWork.Controllers
                 return BadRequest("Неверный ввод. Диагональ дисплея должна быть в диапазоне 11-18'");
             }
 
-            var dbLaptops = _laptops.Where(x => minRam <= x.Ram && x.Ram <= maxRam);
+            var dbLaptops = _laptopService.GetRangeByRam(minRam, maxRam);
 
             if (dbLaptops == null)
             {
@@ -99,20 +97,15 @@ namespace HomeWork.Controllers
         [HttpPost]
         public IActionResult AddNewLaptop(Laptop laptop)
         {
-            laptop.Id = Guid.NewGuid();
-
-            if(laptop.Price != 0)
+            if(laptop != null)
             {
-                laptop.Description = "В продаже";
-            }
-            else
-            {
-                laptop.Description = "Цена формируется";
+                var createdGuid = _laptopService.AddLaptop(laptop);
+                _logger.LogInformation($"AddNewLaptop: Added new Laptop with id-{createdGuid}");
+                return Created(createdGuid.ToString(), laptop);
             }
 
-            _laptops.Add(laptop);
-            _logger.LogInformation($"AddNewLaptop: Added new Laptop with id-{laptop.Id}");
-            return Ok(laptop);
+            _logger.LogInformation($"AddNewLaptop: nullable Input");
+            return BadRequest();
         }
 
         #endregion
@@ -121,16 +114,14 @@ namespace HomeWork.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteLaptop(Guid id)
         {
-            var dbLaptop = _laptops.FirstOrDefault(x => x.Id == id);
-
-            if(dbLaptop != null)
+            var deleted = _laptopService.DeleteLaptopById(id);
+            if(deleted != null)
             {
-                _laptops.Remove(dbLaptop);
-                _logger.LogInformation($"DeleteLaptop: deleted Laptop with id-{dbLaptop.Id}");
+                _logger.LogInformation($"DeleteLaptop: Laptop wit id-{id} is deleted");
                 return NoContent();
             }
 
-            _logger.LogInformation($"DeleteLaptop: Laptop wit id-{id} is not found");
+            _logger.LogInformation($"DeleteLaptop: Laptop wit id-{id} is not deleted");
             return NotFound();
         }
         #endregion
@@ -139,16 +130,15 @@ namespace HomeWork.Controllers
         [HttpPut]
         public IActionResult UpdateLaptop(Laptop laptop)
         {
-            var dbLaptop = _laptops.FirstOrDefault(x => x.Id == laptop.Id);
+            var updated = _laptopService.UpdateLaptop(laptop);
 
-            if(dbLaptop != null)
+            if(updated)
             {
-                var index = _laptops.IndexOf(laptop);
-                _laptops[index] = laptop;
+                _logger.LogInformation($"UpdateLaptop: Laptop wit id-{laptop.Id} is updated - {updated}");
                 return Ok(laptop);
             }
 
-            _logger.LogInformation($"UpdateLaptop: Laptop wit id-{laptop.Id} is not found");
+            _logger.LogInformation($"UpdateLaptop: Laptop wit id-{laptop.Id} is updated - {updated}");
             return NotFound();
         }
         #endregion

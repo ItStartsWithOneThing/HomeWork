@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using HomeWorkBL;
+using HomeWorkBL.Profiles;
+using HomeWorkDAL;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -25,6 +29,15 @@ namespace HomeWork
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped<LaptopService>();
+            services.AddScoped<LaptopRepository>();
+
+            var assemblies = new[]
+            {
+                Assembly.GetAssembly(typeof(LaptopProfile))
+            };
+
+            services.AddAutoMapper(assemblies);
             services.AddControllers();
         }
 
