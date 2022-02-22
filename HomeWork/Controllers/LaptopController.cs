@@ -130,6 +130,12 @@ namespace HomeWork.Controllers
         [HttpPut]
         public IActionResult UpdateLaptop(Laptop laptop)
         {
+            if(laptop == null)
+            {
+                _logger.LogInformation($"UpdateLaptop: nullable Input");
+                return BadRequest();
+            }
+
             var updated = _laptopService.UpdateLaptop(laptop);
 
             if(updated)

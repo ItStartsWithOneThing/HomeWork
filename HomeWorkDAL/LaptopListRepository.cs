@@ -5,11 +5,11 @@ using System.Linq;
 
 namespace HomeWorkDAL
 {
-    public class LaptopRepository
+    public class LaptopListRepository : ILaptopRepository
     {
         private static List<LaptopDTO> _laptops;
 
-        static LaptopRepository()
+        static LaptopListRepository()
         {
             _laptops = new List<LaptopDTO>();
         }
@@ -24,7 +24,7 @@ namespace HomeWorkDAL
 
         public IEnumerable<LaptopDTO> GetAllLaptops()
         {
-                return _laptops;
+            return _laptops;
         }
 
         public LaptopDTO GetByMultiple(int ram, int ssd, string model)
@@ -46,26 +46,18 @@ namespace HomeWorkDAL
         {
             var dbLaptop = GetById(id);
 
-            if(dbLaptop != null)
-            {
-                _laptops.Remove(dbLaptop);
-                return dbLaptop;
-            }
-
-            return new LaptopDTO();
+            _laptops.Remove(dbLaptop);
+            return dbLaptop;
         }
 
         public bool UpdateLaptop(LaptopDTO laptop)
         {
             var dbLaptop = GetById(laptop.Id);
 
-            if(dbLaptop != null)
-            {
-                var index = _laptops.IndexOf(dbLaptop);
-                _laptops[index] = laptop;
-            }
+            var index = _laptops.IndexOf(dbLaptop);
+            _laptops[index] = laptop;
 
-            return dbLaptop != null;
+            return true;
         }
     }
 }

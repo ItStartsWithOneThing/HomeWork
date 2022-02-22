@@ -10,10 +10,10 @@ namespace HomeWorkBL
 {
     public class LaptopService
     {
-        private LaptopRepository _laptopRepository;
+        private ILaptopRepository _laptopRepository;
         private IMapper _mapper;
 
-        public LaptopService(IMapper mapper, LaptopRepository laptopRepository)
+        public LaptopService(IMapper mapper, ILaptopRepository laptopRepository)
         {
             _mapper = mapper;
             _laptopRepository = laptopRepository;
@@ -84,10 +84,11 @@ namespace HomeWorkBL
 
         public Laptop DeleteLaptopById(Guid id)
         {
-            var dbLaptop = _laptopRepository.DeleteByID(id);
+            var dbLaptop = _laptopRepository.GetById(id);
 
             if(dbLaptop != null)
             {
+                _laptopRepository.DeleteByID(id);
                 return _mapper.Map<Laptop>(dbLaptop);
             }
 
@@ -96,8 +97,13 @@ namespace HomeWorkBL
         
         public bool UpdateLaptop(Laptop laptop)
         {
-            var dbLaptop = _mapper.Map<LaptopDTO>(laptop);
-            return _laptopRepository.UpdateLaptop(dbLaptop);
+            if(_laptopRepository.GetById(laptop.Id) != null)
+            {
+                var dbLaptop = _mapper.Map<LaptopDTO>(laptop);
+                return _laptopRepository.UpdateLaptop(dbLaptop);
+            }
+
+            return false;
         }
     }
 }
